@@ -1,7 +1,5 @@
 ﻿using Octokit;
-using System;
 using System.Diagnostics;
-using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Reflection;
@@ -134,6 +132,14 @@ class Program
                 ExtractToDirectory(args[1], args[2]).Wait();
                 Console.WriteLine($"extracted zipPath: {args[1]} - destination: {args[2]}");
             }
+            else if (args.Length == 4 && (args[0] == "--download" || args[0] == "-d") && args[1].Length > 0 && args[2].Length > 0 && args[3].Length > 0)
+            {
+                if (args[3] == "/" || args[3] == "\\") args[3] = Environment.CurrentDirectory;
+                var destination = Path.Combine(args[3], args[1]);
+                Console.WriteLine($"Downloading file: {args[1]} - from {args[2]} - destination: {destination}");
+                DownloadRelease(args[1], args[2], destination).Wait();
+                Console.WriteLine($"Downloaded file: {args[1]}- from {args[2]} - destination: {destination}");
+            }
             else if (args.Length == 1 && (args[0] == "--help" || args[0] == "-h"))
             {
                 var rs = "TM Update help command\r\n";
@@ -149,9 +155,9 @@ class Program
                 Console.WriteLine($"TM Update for github Release.Help command: --help | -h");
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            Console.WriteLine($"TM Update for github Release.Help command: --help | -h");
+            Console.WriteLine($"{ex.Message}\r\nTM Update for github Release.Help command: --help | -h");
         }
     }
     static async Task GetCurrentVersion(string exePath)
@@ -173,6 +179,7 @@ class Program
         //    "The latest release is tagged at {0} and is named {1}",
         //    latest.TagName,
         //    latest.Name);
+        var repository = await client.Repository.Get("octokit", "octokit.net");
         latestVersion = await client.Repository.Release.GetLatest(owner, repoName);
     }
     static async Task DownloadRelease(string fileName, string url, string zipPath)
@@ -188,15 +195,22 @@ class Program
         //webClient.Headers.Add("authorization", "token " + GitHubToken);
         webClient.DownloadProgressChanged += (s, e) =>
         {
-            //0 B/s - 36.9 MB of 102 MB, Paused
+            //Console.WriteLine("{0} {1} - {2}. {3}% complete...", fileName, e.BytesReceived, e.TotalBytesToReceive, e.ProgressPercentage);
             Console.WriteLine("{0} {1} - {2}. {3}% complete...",
                 fileName,
                 $"{ToSize(BytesPerSecond(e.BytesReceived), SizeUnits.KB)} {SizeUnits.KB}/s",
                 $"{ToSize(e.BytesReceived, SizeUnits.MB)} of {ToSize(e.TotalBytesToReceive, SizeUnits.MB)} {SizeUnits.MB}",
                 e.ProgressPercentage);
-            Thread.Sleep(10000);
+            //Thread.Sleep(10000);
         };
+        webClient.Proxy = GlobalProxySelection.GetEmptyWebProxy();
+        //webClient.Proxy = WebRequest.DefaultWebProxy;
         await webClient.DownloadFileTaskAsync(new Uri(url), zipPath);
+    }
+    static async Task DownloadRepository(string owner, string repoName)
+    {
+        var client = new GitHubClient(new Octokit.ProductHeaderValue(owner));
+        var repository = await client.Repository.Get("octokit", "octokit.net");
     }
     static DateTime lastUpdate;
     static long BytesPerSecond(long bytes)
