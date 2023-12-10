@@ -84,6 +84,9 @@ class Program
                     Console.WriteLine($"Deleted Temp file!");
                     //
                     Console.WriteLine($"Update successful");
+                    //
+                    //Run application after update
+                    Process.Start($"{Path.Combine(Environment.CurrentDirectory, args[1])}");
                 }
                 else
                 {
@@ -145,7 +148,7 @@ class Program
                 var rs = "TM Update help command\r\n";
                 rs = $"{rs} [--version | -v] check version of TM Update \r\n";
                 rs = $"{rs} [--version application.exe | -v application.exe] get current version for application\r\n";
-                rs = $"{rs} [--version owner/repoName | -v application.exe] get latest version for application\r\n";
+                rs = $"{rs} [--version owner/repoName | -v owner/repoName] get latest version for application\r\n";
                 rs = $"{rs} [--version | -v application.exe owner/repoName] get current version and latest version for application\r\n";
                 rs = $"{rs} [--update | -u application.exe owner/repoName] update latest version for application";
                 Console.WriteLine(rs);
@@ -170,16 +173,21 @@ class Program
     }
     static async Task GetLatestVersion(string owner, string repoName)
     {
+        var token = "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";
         //var owner = "tuanmjnh";
         //var repoName = "TMFFmpegApp_releases";
-        var client = new GitHubClient(new Octokit.ProductHeaderValue(owner));
+        var client = new GitHubClient(new Octokit.ProductHeaderValue(repoName));
+        client.Credentials = new Credentials(token); // NOTE: not real token
+        //var user = await client.User.Get(owner);
+        //var tokenAuth = new Credentials(token);
+        //client.Credentials = tokenAuth;
         //var releases = await client.Repository.Release.GetAll("tuanmjnh", "TMFFmpegApp_releases");
         //var latest = releases.ElementAt(0);
         //Console.WriteLine(
         //    "The latest release is tagged at {0} and is named {1}",
         //    latest.TagName,
         //    latest.Name);
-        var repository = await client.Repository.Get("octokit", "octokit.net");
+        //var repository = await client.Repository.Get("octokit", "octokit.net");
         latestVersion = await client.Repository.Release.GetLatest(owner, repoName);
     }
     static async Task DownloadRelease(string fileName, string url, string zipPath)
