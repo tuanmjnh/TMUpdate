@@ -173,7 +173,7 @@ class Program
     }
     static async Task GetLatestVersion(string owner, string repoName)
     {
-        var token = "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";
+        var token = "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";
         //var owner = "tuanmjnh";
         //var repoName = "TMFFmpegApp_releases";
         var client = new GitHubClient(new Octokit.ProductHeaderValue(repoName));
