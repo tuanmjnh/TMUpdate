@@ -1,0 +1,8 @@
+.DS_Store
+.thumbs.db
+
+# Build directories and files
+.vs
+bin
+obj
+Properties
